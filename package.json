@@ -1,0 +1,20 @@
+{
+  "name": "expense-guard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "eve dev",
+    "build": "eve build",
+    "eval": "eve eval"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.85",
+    "ai": "7.0.0-beta.178",
+    "eve": "0.11.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3"
+  }
+}

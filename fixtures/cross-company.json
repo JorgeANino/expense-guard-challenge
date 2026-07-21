@@ -1,0 +1,15 @@
+{
+  "company_id": "initech",
+  "category": "meals",
+  "claimed_amount": 40,
+  "currency": "USD",
+  "receipt": "DINER 88\nBurgers x2 .... $28.00\nDrinks ........ $6.00\nTax ........... $6.00\nTOTAL ......... $40.00\nPaid: MASTERCARD 5500 0000 0000 0004\nRFC: XAXX010101000",
+  "line_items": [
+    { "label": "Burgers", "amount": 28 },
+    { "label": "Drinks", "amount": 6 },
+    { "label": "Tax", "amount": 6 }
+  ],
+  "workspace_id": "ws-initech-0002",
+  "chat_id": "exp-initech-9001",
+  "label": "production"
+}

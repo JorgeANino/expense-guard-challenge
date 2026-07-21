@@ -1,0 +1,11 @@
+{
+  "company_id": "globex",
+  "category": "travel",
+  "claimed_amount": 1280,
+  "currency": "USD",
+  "receipt": "SKYWAY AIRLINES\nPassenger: J. ????\nFare: $ [illegible]\nBaggage: $45.00\nTaxes & fees: $???\nTOTAL: $ [smudged]\nCard: **** **** **** 7788",
+  "line_items": [{ "label": "Baggage", "amount": 45 }],
+  "workspace_id": "ws-globex-0007",
+  "chat_id": "exp-globex-3001",
+  "label": "production"
+}

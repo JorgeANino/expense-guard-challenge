@@ -1,0 +1,11 @@
+{
+  "company_id": "acme",
+  "category": "software",
+  "claimed_amount": 450,
+  "currency": "USD",
+  "receipt": "CLOUDDESK SAAS\nInvoice #INV-8841\nPlan: Team (monthly)\nSeats: 15\nAmount due ..... $450.00\nTOTAL .......... $450.00\nBilled to card ending 0198",
+  "line_items": [{ "label": "Team plan (monthly)", "amount": 450 }],
+  "workspace_id": "ws-acme-0001",
+  "chat_id": "exp-acme-1002",
+  "label": "production"
+}
