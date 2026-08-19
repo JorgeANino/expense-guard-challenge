@@ -106,7 +106,7 @@ agent everywhere is a wrong answer.
 
 ## Deliverables
 
-1. **A PR or diff** against this repo with your changes.
+1. **The link to your public copy of this repo** with your changes committed. Create the copy with **"Use this template"**. No pull request against this repo — just send the link when you're done.
 2. **`FINDINGS.md`** — short and direct. For each thing you addressed: what you found, how you
    confirmed it was real, what you changed, and why. Also list anything you noticed but
    deliberately chose *not* to fix, and why you deprioritized it. We want your reasoning, not a
