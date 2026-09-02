@@ -4,3 +4,7 @@ node_modules/
 .workflow-data/
 .env
 *.log
+
+# Local Claude Code orchestration tooling and coaching artifacts — not part of the deliverable
+.claude/
+*.jsonl
