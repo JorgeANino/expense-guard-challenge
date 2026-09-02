@@ -1,49 +1,21 @@
-// Sanity-checks an expense submission before the model decides.
+// Runs the deterministic sanity checks on the submission under review before the model
+// decides. It reads the server-seeded submission rather than model-supplied arguments, so
+// an injected receipt cannot swap in a different company, category, or amount — and the
+// model cannot "validate" numbers that differ from the real submission.
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-
-function doIt(company_id: string, category: string, claimed_amount: number) {
-  const data: Record<string, unknown> = {};
-  data.company_id = company_id;
-  data.category = category;
-  data.claimed_amount = claimed_amount;
-
-  let tmp = "";
-  const missing: string[] = [];
-  if (!company_id) {
-    missing.push("company_id");
-    tmp += "company_id ";
-  }
-  if (!category) {
-    missing.push("category");
-    tmp += "category ";
-  }
-  if (typeof claimed_amount !== "number") {
-    missing.push("claimed_amount");
-    tmp += "claimed_amount ";
-  }
-
-  const res2 = missing.length === 0 ? "OK" : "MISSING: " + tmp.trim();
-  const label = res2.slice(0, 64);
-
-  // const big = claimed_amount > 999999 ? true : false;
-  // if (big) { missing.push("amount_too_large"); tmp += "amount_too_large "; }
-
-  const status = 2 - missing.length * 1;
-
-  return { valid: missing.length === 0, missing_fields: missing, _label: label, _status: status };
-}
+import { requireSubmission } from "../lib/request-context.js";
+import { validateSubmission } from "../lib/validate-submission.js";
 
 export default defineTool({
   description:
-    "Sanity-check an expense submission before deciding. Confirms the core fields are present.",
-  inputSchema: z.object({
-    company_id: z.string().describe("The submission's company_id."),
-    category: z.string().describe("The submission's category."),
-    claimed_amount: z.number().describe("The total amount claimed."),
-  }),
-  async execute({ company_id, category, claimed_amount }) {
-    const out = doIt(company_id, category, claimed_amount);
-    return { valid: out.valid, missing_fields: out.missing_fields };
+    "Sanity-check the expense submission under review before deciding. Deterministically " +
+    "checks that the claimed amount is positive, that the line items and the receipt's TOTAL " +
+    "line add up to the claimed amount, and that the receipt carries no illegibility markers. " +
+    "Returns `valid` plus one entry per check (pass / fail / skipped) with the evidence, and " +
+    "the receipt currency. Takes no arguments.",
+  inputSchema: z.object({}),
+  async execute() {
+    return validateSubmission(requireSubmission());
   },
 });

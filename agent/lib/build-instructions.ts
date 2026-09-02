@@ -1,71 +1,59 @@
-// Builds Expense Guard's system instructions for a single review.
+// Builds Expense Guard's system instructions. They are split in two so the prompt cache
+// can reuse the stable part across reviews:
+//
+// - REVIEW_INSTRUCTIONS is identical for every review (role, steps, rubric). It is served
+//   as the static instructions block (agent/instructions/review-guide.ts), which eve renders
+//   as its own system block *ahead of* the dynamic ones. A prompt cache is a prefix match:
+//   the text that changes on every request has to come last, and it must not share a block
+//   with the stable text — a single block is cached whole or not at all.
+// - buildSubmissionInstructions renders the per-review block (submission + calendar date),
+//   the only part that varies between reviews.
 import { type tExpenseSubmission } from "./request-context.js";
 
-function header() {
-  let out = "";
-  out = out + "You are Expense Guard, an automated expense-review agent for a multi-company expense\n";
-  out = out + "platform. Each submission gives you a company_id, a receipt (raw OCR text), a claimed\n";
-  out = out + "amount, and a category. Return exactly one decision: approve, flag_for_review, or reject.\n";
-  return out;
+export const REVIEW_INSTRUCTIONS = `You are Expense Guard, an automated expense-review agent for a multi-company expense
+platform. Each submission gives you a company_id, a receipt (raw OCR text), a claimed
+amount, and a category. Return exactly one decision: approve, flag_for_review, or reject.
+
+How to review a submission:
+1. Call search_policy, optionally with a topic (a category or keyword), to retrieve this
+   company's written expense policy. The tool is already scoped to the company under
+   review. Never rely on policy you remember from another company — each company sets its
+   own limits.
+2. Compare the claimed amount and category against the rules you retrieved.
+3. Double-check that the receipt totals add up and that the receipt is legible before you
+   decide. You may call validate_expense (it takes no arguments) to run those checks on the
+   submission under review.
+
+Decision rubric:
+- approve: the expense clearly falls within a policy rule and nothing looks off.
+- flag_for_review: the expense is over a limit that allows manager/approver sign-off, or
+  something is ambiguous and a human should take a look.
+- reject: the expense violates a hard rule (for example a non-reimbursable category).
+
+Always put the specific policy rule that drives your decision — its id and limit — in
+cited_rule. In your reason, quote the specific receipt details that justify the decision
+so a reviewer can see the evidence you used.`;
+
+const DEFAULT_CURRENCY = "USD";
+
+// The agent only needs the day (to judge receipt dates); a millisecond timestamp made every
+// prompt unique, so even an identical resubmission could never hit the cache.
+export function formatCalendarDate(now: Date): string {
+  return now.toISOString().slice(0, "YYYY-MM-DD".length);
 }
 
-function steps() {
-  let x = "";
-  x = x + "\n";
-  x = x + "How to review a submission:\n";
-  x = x + "1. Call search_policy with the submission's company_id to retrieve that company's written\n";
-  x = x + "   expense policy. Never rely on policy you remember from another company — each company\n";
-  x = x + "   sets its own limits.\n";
-  x = x + "2. Compare the claimed amount and category against the rules you retrieved.\n";
-  x = x + "3. Double-check that the receipt totals add up and that the receipt is legible before you\n";
-  x = x + "   decide. You may call validate_expense to sanity-check the submission's fields.\n";
-  return x;
-}
-
-function rubric() {
-  let r = "";
-  r = r + "\n";
-  r = r + "Decision rubric:\n";
-  r = r + "- approve: the expense clearly falls within a policy rule and nothing looks off.\n";
-  r = r + "- flag_for_review: the expense is over a limit that allows manager/approver sign-off, or\n";
-  r = r + "  something is ambiguous and a human should take a look.\n";
-  r = r + "- reject: the expense violates a hard rule (for example a non-reimbursable category).\n";
-  r = r + "\n";
-  r = r + "Always put the specific policy rule that drives your decision — its id and limit — in\n";
-  r = r + "cited_rule. In your reason, quote the specific receipt details that justify the decision\n";
-  r = r + "so a reviewer can see the evidence you used.";
-  return r;
-}
-
-function renderSubmission(submission: tExpenseSubmission, now: Date): string {
-  const cur = submission.currency ?? "USD";
-  const li = submission.line_items ?? [];
+export function buildSubmissionInstructions(submission: tExpenseSubmission, now: Date): string {
   const payload = {
     company_id: submission.company_id,
     category: submission.category,
     claimed_amount: submission.claimed_amount,
-    currency: cur,
+    currency: submission.currency ?? DEFAULT_CURRENCY,
     receipt: submission.receipt,
-    line_items: li,
+    line_items: submission.line_items ?? [],
   };
-  let block = "";
-  block = block + "Current date: " + now.toISOString() + "\n";
-  block = block + "Submission under review:" + "\n";
-  block = block + JSON.stringify(payload, null, 2);
-  return block;
-}
-
-// function oldRender(submission: tExpenseSubmission) {
-//   return "Review this: " + submission.company_id + " " + submission.category;
-// }
-
-export function buildSystemPrompt(submission: tExpenseSubmission, now: Date): string {
-  const volatile = renderSubmission(submission, now);
-  let prompt = "";
-  prompt = prompt + volatile;
-  prompt = prompt + "\n\n";
-  prompt = prompt + header();
-  prompt = prompt + steps();
-  prompt = prompt + rubric();
-  return prompt;
+  return [
+    `Current date: ${formatCalendarDate(now)}`,
+    "Submission under review:",
+    JSON.stringify(payload, null, 2),
+  ].join("\n");
 }
